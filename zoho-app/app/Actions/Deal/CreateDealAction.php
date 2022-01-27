@@ -3,12 +3,12 @@
 namespace App\Actions\Deal;
 
 use App\Constant\RecordConstant;
+use App\Service\Curl\CurlRequestService;
+use http\Exception\InvalidArgumentException;
 
 final class CreateDealAction
 {
-    public function execute(
-        CreateDealRequest $request
-    ): CreateDealResponse
+    public function execute(CreateDealRequest $request): CreateDealResponse
     {
         $createDealUrl = $request->getApiDomain()
             . "/crm/"
@@ -27,32 +27,16 @@ final class CreateDealAction
             ],
         ];
 
-        $headersArray[] = 'Authorization: Zoho-oauthtoken '
-            . $request->getAccessToken();
-        $headersArray[] = 'Content-Type: application/x-www-form-urlencoded';
+        $response = (new CurlRequestService())
+            ->getResponse(
+                $data,
+                $createDealUrl,
+                $request->getAccessToken()
+            );
 
-        $curl = curl_init();
-
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $createDealUrl,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_HTTPHEADER => $headersArray,
-            CURLOPT_POSTFIELDS => json_encode($data),
-            CURLOPT_HEADER => false,
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        ]);
-
-        $response = json_decode(
-            curl_exec($curl)
-        );
-
-        curl_close($curl);
+        if(!$response->data) {
+            throw new InvalidArgumentException('Ошибка создания записи Сделка');
+        }
 
         $recordId = '';
 

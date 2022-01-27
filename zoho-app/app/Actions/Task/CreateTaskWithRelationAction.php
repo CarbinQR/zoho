@@ -3,12 +3,12 @@
 namespace App\Actions\Task;
 
 use App\Constant\RecordConstant;
+use App\Service\Curl\CurlRequestService;
+use http\Exception\InvalidArgumentException;
 
 final class CreateTaskWithRelationAction
 {
-    public function execute(
-        CreateTaskWithRelationRequest $request
-    ): CreateTaskWithRelationResponse
+    public function execute(CreateTaskWithRelationRequest $request): CreateTaskWithRelationResponse
     {
         $createTaskUrl = $request->getApiDomain()
             . "/crm/"
@@ -30,28 +30,16 @@ final class CreateTaskWithRelationAction
             ],
         ];
 
-        $curl = curl_init();
+        $response = (new CurlRequestService())
+            ->getResponse(
+                $data,
+                $createTaskUrl,
+                $request->getAccessToken()
+            );
 
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $createTaskUrl,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => $headersArray,
-            CURLOPT_POSTFIELDS => json_encode($data),
-            CURLOPT_HEADER => false,
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        ]);
-
-        $response = json_decode(
-            curl_exec($curl)
-        );
-
-        curl_close($curl);
+        if(!$response->data) {
+            throw new InvalidArgumentException('Ошибка создания записи Задача');
+        }
 
         $recordId = '';
 
