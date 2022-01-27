@@ -1,0 +1,22 @@
+version: "3.7"
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: laravel-app
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+      - ./Docker/php/php.ini:/usr/local/etc/php/php.ini
+    ports:
+    -   "9000:9000"
+
+  nginx:
+    image: nginx:alpine
+    container_name: laravel-nginx
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/var/www
+      - ./Docker/nginx/conf.d/:/etc/nginx/conf.d/
